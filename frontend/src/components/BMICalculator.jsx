@@ -65,3 +65,4 @@ const BMICalculator = ({ weight, height, onBMIChange, onWeightChange, onHeightCh
 };
 
 export default BMICalculator;
+
