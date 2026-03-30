@@ -23,7 +23,7 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
 
   // Configure axios with auth token
   const axiosInstance = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL: process.env.baseurl,
     headers: { Authorization: `Bearer ${token}` }
   });
 

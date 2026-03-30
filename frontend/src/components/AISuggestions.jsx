@@ -9,7 +9,7 @@ const AISuggestions = ({ healthData }) => {
   const getAISuggestions = async () => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/ai-suggestions', healthData);
+      const response = await axios.post('process.env.baseurl/ai-suggestions', healthData);
       setSuggestions(response.data.suggestions);
     } catch (error) {
       console.error('Error getting AI suggestions:', error);

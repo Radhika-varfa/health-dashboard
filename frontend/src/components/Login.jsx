@@ -16,7 +16,7 @@ const Login = ({ setToken, setUser }) => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post('process.env.baseurl/auth/login', {
         email,
         password
       });
