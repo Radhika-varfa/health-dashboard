@@ -1,61 +1,9 @@
-// import React from 'react';
-// import { FaTint } from 'react-icons/fa';
-
-// const WaterIntake = ({ value, onChange }) => {
-//   const glasses = Math.floor(value / 250);
-//   const target = 2000; // 2 liters target
-
-//   return (
-//     <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition duration-300">
-//       <div className="flex items-center justify-between mb-4">
-//         <div className="flex items-center space-x-2">
-//           <FaTint className="text-blue-500 text-2xl" />
-//           <h3 className="text-lg font-semibold text-gray-700">Water Intake</h3>
-//         </div>
-//         <span className="text-sm text-gray-500">Target: 2L</span>
-//       </div>
-      
-//       <div className="mb-4">
-//         <div className="flex justify-between mb-2">
-//           <span className="text-gray-600">Today's Intake</span>
-//           <span className="font-bold text-blue-600">{value}ml</span>
-//         </div>
-//         <div className="w-full bg-gray-200 rounded-full h-3">
-//           <div 
-//             className="bg-blue-500 h-3 rounded-full transition-all duration-500"
-//             style={{ width: `${Math.min((value / target) * 100, 100)}%` }}
-//           ></div>
-//         </div>
-//       </div>
-
-//       <div className="grid grid-cols-4 gap-2">
-//         {[1, 2, 3, 4].map(glass => (
-//           <button
-//             key={glass}
-//             onClick={() => onChange(value + 250)}
-//             className="bg-blue-100 text-blue-600 py-2 rounded-lg hover:bg-blue-200 transition font-semibold"
-//           >
-//             +{glass} 🥛
-//           </button>
-//         ))}
-//       </div>
-      
-//       <p className="text-sm text-gray-500 mt-3 text-center">
-//         {glasses} glasses consumed • {target - value}ml to go
-//       </p>
-//     </div>
-//   );
-// };
-
-// export default WaterIntake;
-
-
-
 import React from 'react';
 import { FaTint, FaUndo } from 'react-icons/fa';
 
 const WaterIntake = ({ value, onChange }) => {
-  const glasses = Math.floor(value / 250);
+  // Remove the unused variable or comment it out
+  // If you need it later, use it or keep it commented
   const target = 2000; // 2 liters target
   const percentage = Math.min((value / target) * 100, 100);
 

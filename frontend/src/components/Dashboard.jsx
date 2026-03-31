@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import WaterIntake from './WaterIntake';
@@ -20,22 +20,31 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     bmi: 0
   });
   const navigate = useNavigate();
+  
+  // Create axios instance with useRef to avoid recreation
+  const axiosInstance = useRef(
+    axios.create({
+      baseURL: process.env.REACT_APP_API_URL,
+    })
+  ).current;
 
-  // Configure axios with auth token
-  const axiosInstance = axios.create({
-    baseURL: process.env.baseurl,
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
+  // Update token in interceptor instead of recreating instance
   useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchHealthData();
-  }, [token]);
+    axiosInstance.interceptors.request.use((config) => {
+      config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    });
+  }, [token, axiosInstance]);
 
-  const fetchHealthData = async () => {
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+    navigate('/login');
+  }, [navigate, setToken, setUser]);
+
+  const fetchHealthData = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/health-data');
       setHealthData(response.data);
@@ -45,9 +54,9 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
         handleLogout();
       }
     }
-  };
+  }, [axiosInstance, handleLogout]);
 
-  const saveHealthData = async () => {
+  const saveHealthData = useCallback(async () => {
     try {
       await axiosInstance.post('/health-data', currentData);
       fetchHealthData();
@@ -56,19 +65,19 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
       console.error('Error saving data:', error);
       alert('Error saving data. Please try again.');
     }
-  };
+  }, [axiosInstance, currentData, fetchHealthData]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-    navigate('/login');
-  };
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    fetchHealthData();
+  }, [token, navigate, fetchHealthData]);
 
-  const updateData = (field, value) => {
+  const updateData = useCallback((field, value) => {
     setCurrentData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">

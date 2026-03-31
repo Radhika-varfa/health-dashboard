@@ -1,17 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { FaWeight, FaRuler } from 'react-icons/fa';
 
 const BMICalculator = ({ weight, height, onBMIChange, onWeightChange, onHeightChange }) => {
-  const calculateBMI = () => {
-    const heightInMeters = height / 100;
-    const bmi = weight / (heightInMeters * heightInMeters);
-    return bmi.toFixed(1);
-  };
+  const calculateBMI = useCallback(() => {
+    if (weight && height && height > 0) {
+      const heightInMeters = height / 100;
+      const bmi = weight / (heightInMeters * heightInMeters);
+      return bmi.toFixed(1);
+    }
+    return '0';
+  }, [weight, height]);
 
   useEffect(() => {
     const bmi = calculateBMI();
     onBMIChange(parseFloat(bmi));
-  }, [weight, height]);
+  }, [calculateBMI, onBMIChange]);
 
   const getBMICategory = (bmi) => {
     if (bmi < 18.5) return { text: 'Underweight', color: 'text-blue-500', bg: 'bg-blue-100' };
@@ -65,4 +68,3 @@ const BMICalculator = ({ weight, height, onBMIChange, onWeightChange, onHeightCh
 };
 
 export default BMICalculator;
-
