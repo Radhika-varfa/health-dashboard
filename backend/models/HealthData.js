@@ -6,10 +6,6 @@ const healthDataSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  date: {
-    type: Date,
-    default: Date.now
-  },
   waterIntake: {
     type: Number,
     default: 0
@@ -23,15 +19,18 @@ const healthDataSchema = new mongoose.Schema({
     default: 0
   },
   weight: {
-    type: Number
+    type: Number,
+    default: 70
   },
   height: {
-    type: Number
+    type: Number,
+    default: 170
   },
   bmi: {
-    type: Number
+    type: Number,
+    default: 0
   },
-  createdAt: {
+  date: {
     type: Date,
     default: Date.now
   }
