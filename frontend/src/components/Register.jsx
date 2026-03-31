@@ -24,7 +24,7 @@ const Register = ({ setToken, setUser }) => {
     setError('');
 
     try {
-      const response = await axios.post('process.env.process.env.REACT_APP_API_URL/auth/register', {
+      const response = await axios.post('process.env.REACT_APP_API_URL/auth/register', {
         name,
         email,
         password
