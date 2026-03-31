@@ -169,6 +169,254 @@
 
 // export default Dashboard;
 
+// import React, { useState, useEffect, useCallback } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import axios from 'axios';
+// import WaterIntake from './WaterIntake';
+// import SleepTracker from './SleepTracker';
+// import StepsTracker from './StepsTracker';
+// import BMICalculator from './BMICalculator';
+// import AISuggestions from './AISuggestions';
+// import WeeklyReport from './WeeklyReport';
+// import { FaHeart, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
+
+// const Dashboard = ({ token, user, setToken, setUser }) => {
+//   const [healthData, setHealthData] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [saving, setSaving] = useState(false);
+//   const [currentData, setCurrentData] = useState({
+//     waterIntake: 0,
+//     sleepHours: 0,
+//     steps: 0,
+//     weight: 70,
+//     height: 170,
+//     bmi: 0
+//   });
+//   const navigate = useNavigate();
+
+//   const handleLogout = useCallback(() => {
+//     localStorage.removeItem('token');
+//     localStorage.removeItem('user');
+//     setToken(null);
+//     setUser(null);
+//     navigate('/login');
+//   }, [navigate, setToken, setUser]);
+
+//   const fetchHealthData = useCallback(async () => {
+//     // Don't try to fetch if no token
+//     if (!token) {
+//       console.log('No token available, skipping fetch');
+//       setLoading(false);
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+//       setError(null);
+      
+//       console.log('Fetching health data...');
+      
+//       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/health-data`, {
+//         headers: { 
+//           'Authorization': `Bearer ${token}`,
+//           'Content-Type': 'application/json'
+//         },
+//         timeout: 10000 // 10 second timeout
+//       });
+      
+//       console.log('Health data fetched successfully:', response.data);
+//       setHealthData(response.data || []);
+//     } catch (error) {
+//       console.error('Error fetching data:', error);
+      
+//       if (error.code === 'ECONNABORTED') {
+//         setError('Request timeout. Please check your connection.');
+//       } else if (error.response?.status === 401) {
+//         console.error('Token invalid or expired, logging out');
+//         handleLogout();
+//       } else if (error.response?.status === 404) {
+//         setError('API endpoint not found. Please contact support.');
+//       } else if (error.request) {
+//         setError('Cannot connect to server. Please check your internet connection.');
+//       } else {
+//         setError('Failed to load health data. Please refresh the page.');
+//       }
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [token, handleLogout]);
+
+//   const saveHealthData = useCallback(async () => {
+//     if (!token) {
+//       console.error('No token found');
+//       handleLogout();
+//       return;
+//     }
+
+//     try {
+//       setSaving(true);
+//       setError(null);
+      
+//       console.log('Saving health data...', currentData);
+      
+//       await axios.post(`${process.env.REACT_APP_API_URL}/api/health-data`, currentData, {
+//         headers: { 
+//           'Authorization': `Bearer ${token}`,
+//           'Content-Type': 'application/json'
+//         },
+//         timeout: 10000
+//       });
+      
+//       alert('Health data saved successfully!');
+      
+//       // Refresh the data after saving
+//       await fetchHealthData();
+//     } catch (error) {
+//       console.error('Error saving data:', error);
+      
+//       if (error.response?.status === 401) {
+//         handleLogout();
+//       } else if (error.code === 'ECONNABORTED') {
+//         alert('Request timeout. Please try again.');
+//       } else if (error.request) {
+//         alert('Cannot connect to server. Please check your connection.');
+//       } else {
+//         alert('Error saving data. Please try again.');
+//       }
+//     } finally {
+//       setSaving(false);
+//     }
+//   }, [token, currentData, fetchHealthData, handleLogout]);
+
+//   useEffect(() => {
+//     // Small delay to ensure token is properly set
+//     const timer = setTimeout(() => {
+//       if (!token) {
+//         console.log('No token, redirecting to login');
+//         navigate('/login');
+//         return;
+//       }
+      
+//       console.log('Token exists, fetching health data');
+//       fetchHealthData();
+//     }, 100);
+    
+//     return () => clearTimeout(timer);
+//   }, [token, navigate, fetchHealthData]);
+
+//   const updateData = useCallback((field, value) => {
+//     setCurrentData(prev => ({ ...prev, [field]: value }));
+//   }, []);
+
+//   // Show loading state
+//   if (loading && healthData.length === 0) {
+//     return (
+//       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+//         <div className="text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+//           <p className="text-gray-600">Loading your dashboard...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Show error state with retry button
+//   if (error && healthData.length === 0) {
+//     return (
+//       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+//         <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md">
+//           <div className="text-red-500 text-5xl mb-4">⚠️</div>
+//           <h3 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Data</h3>
+//           <p className="text-gray-600 mb-4">{error}</p>
+//           <button
+//             onClick={() => {
+//               setError(null);
+//               fetchHealthData();
+//             }}
+//             className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+//           >
+//             Try Again
+//           </button>
+//           <button
+//             onClick={handleLogout}
+//             className="ml-3 bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition"
+//           >
+//             Go to Login
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       {/* Header */}
+//       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
+//         <div className="container mx-auto px-4 py-6">
+//           <div className="flex items-center justify-between flex-wrap">
+//             <div className="flex items-center space-x-3">
+//               <FaHeart className="text-3xl animate-pulse" />
+//               <h1 className="text-2xl md:text-3xl font-bold">AI Health & Lifestyle Dashboard</h1>
+//             </div>
+            
+//             <div className="flex items-center space-x-4 mt-2 md:mt-0">
+//               <div className="flex items-center space-x-2">
+//                 <FaUserCircle className="text-2xl" />
+//                 <span className="font-semibold">{user?.name || 'User'}</span>
+//               </div>
+//               <button
+//                 onClick={saveHealthData}
+//                 disabled={saving}
+//                 className="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-purple-50 transition shadow-md text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+//               >
+//                 {saving ? 'Saving...' : "Save Today's Data"}
+//               </button>
+//               <button
+//                 onClick={handleLogout}
+//                 className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition shadow-md flex items-center space-x-2 text-sm md:text-base"
+//               >
+//                 <FaSignOutAlt />
+//                 <span>Logout</span>
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       <div className="container mx-auto px-4 py-8">
+//         {/* Stats Grid */}
+//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+//           <WaterIntake value={currentData.waterIntake} onChange={(v) => updateData('waterIntake', v)} />
+//           <SleepTracker value={currentData.sleepHours} onChange={(v) => updateData('sleepHours', v)} />
+//           <StepsTracker value={currentData.steps} onChange={(v) => updateData('steps', v)} />
+//           <BMICalculator 
+//             weight={currentData.weight} 
+//             height={currentData.height}
+//             onBMIChange={(bmi) => updateData('bmi', bmi)}
+//             onWeightChange={(w) => updateData('weight', w)}
+//             onHeightChange={(h) => updateData('height', h)}
+//           />
+//         </div>
+
+//         {/* AI Suggestions & Charts */}
+//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+//           <AISuggestions healthData={currentData} />
+//           <WeeklyReport healthData={healthData} />
+//         </div>
+
+//         {/* Motivational Quote */}
+//         <div className="bg-gradient-to-r from-pink-500 to-orange-500 rounded-xl p-6 text-white text-center shadow-lg">
+//           <p className="text-xl font-semibold">"Your health is an investment, not an expense."</p>
+//           <p className="text-sm mt-2">Keep track daily for a healthier lifestyle!</p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Dashboard;
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -191,9 +439,13 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     steps: 0,
     weight: 70,
     height: 170,
-    bmi: 0
+    bmi: 0,
   });
   const navigate = useNavigate();
+
+  const getActiveToken = useCallback(() => {
+    return token || localStorage.getItem('token');
+  }, [token]);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
@@ -204,9 +456,8 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
   }, [navigate, setToken, setUser]);
 
   const fetchHealthData = useCallback(async () => {
-    // Don't try to fetch if no token
-    if (!token) {
-      console.log('No token available, skipping fetch');
+    const activeToken = getActiveToken();
+    if (!activeToken) {
       setLoading(false);
       return;
     }
@@ -214,30 +465,34 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('Fetching health data...');
-      
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/health-data`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000 // 10 second timeout
-      });
-      
-      console.log('Health data fetched successfully:', response.data);
+
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/health-data`,
+        {
+          headers: {
+            Authorization: `Bearer ${activeToken}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+
       setHealthData(response.data || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      
-      if (error.code === 'ECONNABORTED') {
+    } catch (err) {
+      console.error('Error fetching data:', err);
+
+      if (err.code === 'ECONNABORTED') {
         setError('Request timeout. Please check your connection.');
-      } else if (error.response?.status === 401) {
-        console.error('Token invalid or expired, logging out');
-        handleLogout();
-      } else if (error.response?.status === 404) {
+      } else if (err.response?.status === 401) {
+        const storedToken = localStorage.getItem('token');
+        if (!storedToken) {
+          handleLogout();
+        } else {
+          setError('Session error. Please try refreshing the page.');
+        }
+      } else if (err.response?.status === 404) {
         setError('API endpoint not found. Please contact support.');
-      } else if (error.request) {
+      } else if (err.request) {
         setError('Cannot connect to server. Please check your internet connection.');
       } else {
         setError('Failed to load health data. Please refresh the page.');
@@ -245,11 +500,11 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     } finally {
       setLoading(false);
     }
-  }, [token, handleLogout]);
+  }, [getActiveToken, handleLogout]);
 
   const saveHealthData = useCallback(async () => {
-    if (!token) {
-      console.error('No token found');
+    const activeToken = getActiveToken();
+    if (!activeToken) {
       handleLogout();
       return;
     }
@@ -257,29 +512,31 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     try {
       setSaving(true);
       setError(null);
-      
-      console.log('Saving health data...', currentData);
-      
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/health-data`, currentData, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
-      });
-      
+
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/health-data`,
+        currentData,
+        {
+          headers: {
+            Authorization: `Bearer ${activeToken}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+
       alert('Health data saved successfully!');
-      
-      // Refresh the data after saving
       await fetchHealthData();
-    } catch (error) {
-      console.error('Error saving data:', error);
-      
-      if (error.response?.status === 401) {
-        handleLogout();
-      } else if (error.code === 'ECONNABORTED') {
+    } catch (err) {
+      console.error('Error saving data:', err);
+
+      if (err.response?.status === 401) {
+        const storedToken = localStorage.getItem('token');
+        if (!storedToken) handleLogout();
+        else alert('Session error. Please refresh and try again.');
+      } else if (err.code === 'ECONNABORTED') {
         alert('Request timeout. Please try again.');
-      } else if (error.request) {
+      } else if (err.request) {
         alert('Cannot connect to server. Please check your connection.');
       } else {
         alert('Error saving data. Please try again.');
@@ -287,29 +544,31 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     } finally {
       setSaving(false);
     }
-  }, [token, currentData, fetchHealthData, handleLogout]);
+  }, [getActiveToken, currentData, fetchHealthData, handleLogout]);
 
   useEffect(() => {
-    // Small delay to ensure token is properly set
-    const timer = setTimeout(() => {
-      if (!token) {
-        console.log('No token, redirecting to login');
-        navigate('/login');
-        return;
-      }
-      
-      console.log('Token exists, fetching health data');
-      fetchHealthData();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [token, navigate, fetchHealthData]);
+    const activeToken = getActiveToken();
+    if (!activeToken) {
+      navigate('/login');
+      return;
+    }
+    fetchHealthData();
+  }, [token, navigate, fetchHealthData, getActiveToken]);
 
-  const updateData = useCallback((field, value) => {
-    setCurrentData(prev => ({ ...prev, [field]: value }));
-  }, []);
+  // ── CRITICAL FIX: Stable individual updaters via useCallback ──────────────
+  // Previously these were inline arrow functions like (bmi) => updateData('bmi', bmi)
+  // passed directly as props. Inline arrows create a NEW function reference on
+  // every Dashboard render. BMICalculator's useEffect depended on onBMIChange,
+  // so every render triggered the effect → called onBMIChange → updated Dashboard
+  // state → re-rendered Dashboard → new onBMIChange ref → infinite loop → crash.
+  // Stable useCallback refs break the loop: same reference = no effect re-trigger.
+  const updateWater  = useCallback((v) => setCurrentData(p => ({ ...p, waterIntake: v })), []);
+  const updateSleep  = useCallback((v) => setCurrentData(p => ({ ...p, sleepHours: v })), []);
+  const updateSteps  = useCallback((v) => setCurrentData(p => ({ ...p, steps: v })), []);
+  const updateWeight = useCallback((v) => setCurrentData(p => ({ ...p, weight: v })), []);
+  const updateHeight = useCallback((v) => setCurrentData(p => ({ ...p, height: v })), []);
+  const updateBMI    = useCallback((v) => setCurrentData(p => ({ ...p, bmi: v })), []);
 
-  // Show loading state
   if (loading && healthData.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -321,7 +580,6 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     );
   }
 
-  // Show error state with retry button
   if (error && healthData.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -330,10 +588,7 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
           <h3 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Data</h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => {
-              setError(null);
-              fetchHealthData();
-            }}
+            onClick={() => { setError(null); fetchHealthData(); }}
             className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
           >
             Try Again
@@ -357,9 +612,9 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
           <div className="flex items-center justify-between flex-wrap">
             <div className="flex items-center space-x-3">
               <FaHeart className="text-3xl animate-pulse" />
-              <h1 className="text-2xl md:text-3xl font-bold">AI Health & Lifestyle Dashboard</h1>
+              <h1 className="text-2xl md:text-3xl font-bold">AI Health &amp; Lifestyle Dashboard</h1>
             </div>
-            
+
             <div className="flex items-center space-x-4 mt-2 md:mt-0">
               <div className="flex items-center space-x-2">
                 <FaUserCircle className="text-2xl" />
@@ -385,17 +640,29 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              onClick={() => { setError(null); fetchHealthData(); }}
+              className="ml-4 text-sm underline hover:no-underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <WaterIntake value={currentData.waterIntake} onChange={(v) => updateData('waterIntake', v)} />
-          <SleepTracker value={currentData.sleepHours} onChange={(v) => updateData('sleepHours', v)} />
-          <StepsTracker value={currentData.steps} onChange={(v) => updateData('steps', v)} />
-          <BMICalculator 
-            weight={currentData.weight} 
+          <WaterIntake value={currentData.waterIntake} onChange={updateWater} />
+          <SleepTracker value={currentData.sleepHours} onChange={updateSleep} />
+          <StepsTracker value={currentData.steps} onChange={updateSteps} />
+          <BMICalculator
+            weight={currentData.weight}
             height={currentData.height}
-            onBMIChange={(bmi) => updateData('bmi', bmi)}
-            onWeightChange={(w) => updateData('weight', w)}
-            onHeightChange={(h) => updateData('height', h)}
+            onBMIChange={updateBMI}
+            onWeightChange={updateWeight}
+            onHeightChange={updateHeight}
           />
         </div>
 
