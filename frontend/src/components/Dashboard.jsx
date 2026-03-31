@@ -168,6 +168,7 @@
 // };
 
 // export default Dashboard;
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -194,15 +195,6 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
   });
   const navigate = useNavigate();
 
-  // ─── Helper: always get the most up-to-date token ───────────────────────────
-  // The `token` prop can be null for a few render cycles right after login
-  // because React state propagation is async. Reading directly from localStorage
-  // guarantees we have the real value immediately.
-  const getActiveToken = useCallback(() => {
-    return token || localStorage.getItem('token');
-  }, [token]);
-
-  // ─── Logout ──────────────────────────────────────────────────────────────────
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -211,11 +203,9 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     navigate('/login');
   }, [navigate, setToken, setUser]);
 
-  // ─── Fetch health data ───────────────────────────────────────────────────────
   const fetchHealthData = useCallback(async () => {
-    const activeToken = getActiveToken();
-
-    if (!activeToken) {
+    // Don't try to fetch if no token
+    if (!token) {
       console.log('No token available, skipping fetch');
       setLoading(false);
       return;
@@ -224,44 +214,30 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     try {
       setLoading(true);
       setError(null);
-
+      
       console.log('Fetching health data...');
-
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/health-data`,
-        {
-          headers: {
-            Authorization: `Bearer ${activeToken}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
-
+      
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/health-data`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000 // 10 second timeout
+      });
+      
       console.log('Health data fetched successfully:', response.data);
       setHealthData(response.data || []);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-
-      if (err.code === 'ECONNABORTED') {
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      
+      if (error.code === 'ECONNABORTED') {
         setError('Request timeout. Please check your connection.');
-      } else if (err.response?.status === 401) {
-        // ── KEY FIX ──────────────────────────────────────────────────────────
-        // Only truly log out when the token is missing from localStorage too.
-        // A 401 can fire during the race-condition window when the prop hasn't
-        // arrived yet even though a valid token is stored locally.
-        // ─────────────────────────────────────────────────────────────────────
-        const storedToken = localStorage.getItem('token');
-        if (!storedToken) {
-          console.warn('Token missing from storage — logging out');
-          handleLogout();
-        } else {
-          console.warn('Got 401 but token exists in storage — may be a server issue');
-          setError('Session error. Please try refreshing the page.');
-        }
-      } else if (err.response?.status === 404) {
+      } else if (error.response?.status === 401) {
+        console.error('Token invalid or expired, logging out');
+        handleLogout();
+      } else if (error.response?.status === 404) {
         setError('API endpoint not found. Please contact support.');
-      } else if (err.request) {
+      } else if (error.request) {
         setError('Cannot connect to server. Please check your internet connection.');
       } else {
         setError('Failed to load health data. Please refresh the page.');
@@ -269,13 +245,10 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     } finally {
       setLoading(false);
     }
-  }, [getActiveToken, handleLogout]);
+  }, [token, handleLogout]);
 
-  // ─── Save health data ────────────────────────────────────────────────────────
   const saveHealthData = useCallback(async () => {
-    const activeToken = getActiveToken();
-
-    if (!activeToken) {
+    if (!token) {
       console.error('No token found');
       handleLogout();
       return;
@@ -284,36 +257,29 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     try {
       setSaving(true);
       setError(null);
-
+      
       console.log('Saving health data...', currentData);
-
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/health-data`,
-        currentData,
-        {
-          headers: {
-            Authorization: `Bearer ${activeToken}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
-
+      
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/health-data`, currentData, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      });
+      
       alert('Health data saved successfully!');
+      
+      // Refresh the data after saving
       await fetchHealthData();
-    } catch (err) {
-      console.error('Error saving data:', err);
-
-      if (err.response?.status === 401) {
-        const storedToken = localStorage.getItem('token');
-        if (!storedToken) {
-          handleLogout();
-        } else {
-          alert('Session error. Please refresh the page and try again.');
-        }
-      } else if (err.code === 'ECONNABORTED') {
+    } catch (error) {
+      console.error('Error saving data:', error);
+      
+      if (error.response?.status === 401) {
+        handleLogout();
+      } else if (error.code === 'ECONNABORTED') {
         alert('Request timeout. Please try again.');
-      } else if (err.request) {
+      } else if (error.request) {
         alert('Cannot connect to server. Please check your connection.');
       } else {
         alert('Error saving data. Please try again.');
@@ -321,32 +287,29 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     } finally {
       setSaving(false);
     }
-  }, [getActiveToken, currentData, fetchHealthData, handleLogout]);
+  }, [token, currentData, fetchHealthData, handleLogout]);
 
-  // ─── On mount / token change ─────────────────────────────────────────────────
-  // ── KEY FIX ──────────────────────────────────────────────────────────────────
-  // Removed the unreliable 100 ms setTimeout.
-  // We check localStorage synchronously so there is no delay-based race condition.
-  // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const activeToken = getActiveToken();
+    // Small delay to ensure token is properly set
+    const timer = setTimeout(() => {
+      if (!token) {
+        console.log('No token, redirecting to login');
+        navigate('/login');
+        return;
+      }
+      
+      console.log('Token exists, fetching health data');
+      fetchHealthData();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [token, navigate, fetchHealthData]);
 
-    if (!activeToken) {
-      console.log('No token found — redirecting to login');
-      navigate('/login');
-      return;
-    }
-
-    console.log('Token found, fetching health data');
-    fetchHealthData();
-  }, [token, navigate, fetchHealthData, getActiveToken]);
-
-  // ─── Update a single field in currentData ────────────────────────────────────
   const updateData = useCallback((field, value) => {
     setCurrentData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  // ─── Loading state ────────────────────────────────────────────────────────────
+  // Show loading state
   if (loading && healthData.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -358,7 +321,7 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     );
   }
 
-  // ─── Error state ──────────────────────────────────────────────────────────────
+  // Show error state with retry button
   if (error && healthData.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -386,7 +349,6 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     );
   }
 
-  // ─── Dashboard UI ─────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -395,9 +357,9 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
           <div className="flex items-center justify-between flex-wrap">
             <div className="flex items-center space-x-3">
               <FaHeart className="text-3xl animate-pulse" />
-              <h1 className="text-2xl md:text-3xl font-bold">AI Health &amp; Lifestyle Dashboard</h1>
+              <h1 className="text-2xl md:text-3xl font-bold">AI Health & Lifestyle Dashboard</h1>
             </div>
-
+            
             <div className="flex items-center space-x-4 mt-2 md:mt-0">
               <div className="flex items-center space-x-2">
                 <FaUserCircle className="text-2xl" />
@@ -423,26 +385,13 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Inline error banner (when data already loaded but a refresh failed) */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
-            <span>{error}</span>
-            <button
-              onClick={() => { setError(null); fetchHealthData(); }}
-              className="ml-4 text-sm underline hover:no-underline"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <WaterIntake value={currentData.waterIntake} onChange={(v) => updateData('waterIntake', v)} />
           <SleepTracker value={currentData.sleepHours} onChange={(v) => updateData('sleepHours', v)} />
           <StepsTracker value={currentData.steps} onChange={(v) => updateData('steps', v)} />
-          <BMICalculator
-            weight={currentData.weight}
+          <BMICalculator 
+            weight={currentData.weight} 
             height={currentData.height}
             onBMIChange={(bmi) => updateData('bmi', bmi)}
             onWeightChange={(w) => updateData('weight', w)}
