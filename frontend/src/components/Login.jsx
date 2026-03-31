@@ -33,28 +33,43 @@ const Login = ({ setToken, setUser }) => {
   //   }
   // };
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    try {
-    // This will prevent double slashes
-    const apiUrl = process.env.REACT_APP_API_URL.replace(/\/$/, ''); // Remove trailing slash if exists
+  try {
+    const apiUrl = process.env.REACT_APP_API_URL;
+    console.log('API URL:', apiUrl);
+    
     const response = await axios.post(`${apiUrl}/auth/login`, {
       email,
       password
     });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      setToken(response.data.token);
-      setUser(response.data.user);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
-    } finally {
-      setLoading(false);
+
+    console.log('Login response:', response.data);
+    
+    // Make sure token exists in response
+    if (!response.data.token) {
+      throw new Error('No token received from server');
     }
-  };
+    
+    // Store token
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
+    
+    // Update state
+    setToken(response.data.token);
+    setUser(response.data.user);
+    
+    // Navigate to dashboard
+    navigate('/dashboard');
+  } catch (err) {
+    console.error('Login error:', err);
+    setError(err.response?.data?.error || 'Login failed');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600">

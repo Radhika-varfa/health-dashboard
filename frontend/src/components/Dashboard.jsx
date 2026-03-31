@@ -30,37 +30,71 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
   }, [navigate, setToken, setUser]);
 
   const fetchHealthData = useCallback(async () => {
+    // Check if token exists
+    if (!token) {
+      console.error('No token found');
+      handleLogout();
+      return;
+    }
+
     try {
+      console.log('Fetching health data with token:', token.substring(0, 20) + '...'); // Debug log
+      
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/health-data`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log('Health data fetched:', response.data);
       setHealthData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      console.error('Error response:', error.response);
+      
       if (error.response?.status === 401) {
+        console.error('Token invalid or expired, logging out');
         handleLogout();
       }
     }
   }, [token, handleLogout]);
 
   const saveHealthData = useCallback(async () => {
+    if (!token) {
+      console.error('No token found');
+      handleLogout();
+      return;
+    }
+
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/health-data`, currentData, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       await fetchHealthData();
       alert('Health data saved successfully!');
     } catch (error) {
       console.error('Error saving data:', error);
-      alert('Error saving data. Please try again.');
+      if (error.response?.status === 401) {
+        handleLogout();
+      } else {
+        alert('Error saving data. Please try again.');
+      }
     }
-  }, [token, currentData, fetchHealthData]);
+  }, [token, currentData, fetchHealthData, handleLogout]);
 
   useEffect(() => {
+    console.log('Dashboard mounted, token exists:', !!token);
+    
     if (!token) {
+      console.log('No token, redirecting to login');
       navigate('/login');
       return;
     }
+    
     fetchHealthData();
   }, [token, navigate, fetchHealthData]);
 
