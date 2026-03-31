@@ -220,13 +220,17 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/health-data`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'   
         },
         timeout: 10000 // 10 second timeout
       });
       
       console.log('Health data fetched successfully:', response.data);
-      setHealthData(response.data || []);
+      // setHealthData(response.data || []);
+      if (response.data && response.data.length > 0) {
+  setHealthData(response.data);
+}
     } catch (error) {
       console.error('Error fetching data:', error);
       
