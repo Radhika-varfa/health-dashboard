@@ -10,13 +10,35 @@ const Login = ({ setToken, setUser }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setError('');
+
+  //   try {
+  //     const response = await axios.post('process.env.REACT_APP_API_URL/auth/login', {
+  //       email,
+  //       password
+  //     });
+
+  //     localStorage.setItem('token', response.data.token);
+  //     localStorage.setItem('user', JSON.stringify(response.data.user));
+  //     setToken(response.data.token);
+  //     setUser(response.data.user);
+  //     navigate('/dashboard');
+  //   } catch (err) {
+  //     setError(err.response?.data?.error || 'Login failed');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const response = await axios.post('process.env.REACT_APP_API_URL/auth/login', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
         email,
         password
       });

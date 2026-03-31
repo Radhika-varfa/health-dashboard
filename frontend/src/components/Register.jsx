@@ -12,7 +12,7 @@ const Register = ({ setToken, setUser }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
@@ -24,7 +24,8 @@ const Register = ({ setToken, setUser }) => {
     setError('');
 
     try {
-      const response = await axios.post('process.env.REACT_APP_API_URL/auth/register', {
+      // ✅ CORRECT: Removed quotes and used template literals
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/register`, {
         name,
         email,
         password
@@ -41,6 +42,37 @@ const Register = ({ setToken, setUser }) => {
       setLoading(false);
     }
   };
+
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+    
+  //   if (password !== confirmPassword) {
+  //     setError('Passwords do not match');
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   setError('');
+
+  //   try {
+  //     const response = await axios.post('process.env.REACT_APP_API_URL/auth/register', {
+  //       name,
+  //       email,
+  //       password
+  //     });
+
+  //     localStorage.setItem('token', response.data.token);
+  //     localStorage.setItem('user', JSON.stringify(response.data.user));
+  //     setToken(response.data.token);
+  //     setUser(response.data.user);
+  //     navigate('/dashboard');
+  //   } catch (err) {
+  //     setError(err.response?.data?.error || 'Registration failed');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600">
