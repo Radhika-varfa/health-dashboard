@@ -32,14 +32,13 @@ const Login = ({ setToken, setUser }) => {
   //     setLoading(false);
   //   }
   // };
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
   setError('');
 
   try {
     const apiUrl = process.env.REACT_APP_API_URL;
-    console.log('API URL:', apiUrl);
     
     const response = await axios.post(`${apiUrl}/auth/login`, {
       email,
@@ -47,22 +46,28 @@ const Login = ({ setToken, setUser }) => {
     });
 
     console.log('Login response:', response.data);
-    
-    // Make sure token exists in response
+
+    // Make sure token exists
     if (!response.data.token) {
       throw new Error('No token received from server');
     }
+
+    // Store token immediately
+    const token = response.data.token;
+    const userData = response.data.user;
     
-    // Store token
-    localStorage.setItem('token', response.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
     
     // Update state
-    setToken(response.data.token);
-    setUser(response.data.user);
+    setToken(token);
+    setUser(userData);
     
-    // Navigate to dashboard
-    navigate('/dashboard');
+    // Small delay to ensure state is updated
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 100);
+    
   } catch (err) {
     console.error('Login error:', err);
     setError(err.response?.data?.error || 'Login failed');
