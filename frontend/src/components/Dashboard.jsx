@@ -45,7 +45,7 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
 
   const saveHealthData = useCallback(async () => {
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/health-data`, currentData, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/health-data`, currentData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchHealthData();

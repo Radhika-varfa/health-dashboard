@@ -38,11 +38,12 @@ const Login = ({ setToken, setUser }) => {
     setError('');
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
-        email,
-        password
-      });
-
+    // This will prevent double slashes
+    const apiUrl = process.env.REACT_APP_API_URL.replace(/\/$/, ''); // Remove trailing slash if exists
+    const response = await axios.post(`${apiUrl}/auth/login`, {
+      email,
+      password
+    });
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       setToken(response.data.token);
