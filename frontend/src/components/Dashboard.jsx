@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import WaterIntake from './WaterIntake';
@@ -20,21 +20,6 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
     bmi: 0
   });
   const navigate = useNavigate();
-  
-  // Create axios instance with useRef to avoid recreation
-  const axiosInstance = useRef(
-    axios.create({
-      baseURL: process.env.REACT_APP_API_URL,
-    })
-  ).current;
-
-  // Update token in interceptor instead of recreating instance
-  useEffect(() => {
-    axiosInstance.interceptors.request.use((config) => {
-      config.headers.Authorization = `Bearer ${token}`;
-      return config;
-    });
-  }, [token, axiosInstance]);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
@@ -46,7 +31,9 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
 
   const fetchHealthData = useCallback(async () => {
     try {
-      const response = await axiosInstance.get('/health-data');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/health-data`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setHealthData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -54,18 +41,20 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
         handleLogout();
       }
     }
-  }, [axiosInstance, handleLogout]);
+  }, [token, handleLogout]);
 
   const saveHealthData = useCallback(async () => {
     try {
-      await axiosInstance.post('/health-data', currentData);
-      fetchHealthData();
+      await axios.post(`${process.env.REACT_APP_API_URL}/health-data`, currentData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchHealthData();
       alert('Health data saved successfully!');
     } catch (error) {
       console.error('Error saving data:', error);
       alert('Error saving data. Please try again.');
     }
-  }, [axiosInstance, currentData, fetchHealthData]);
+  }, [token, currentData, fetchHealthData]);
 
   useEffect(() => {
     if (!token) {
