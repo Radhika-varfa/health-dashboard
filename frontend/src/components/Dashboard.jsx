@@ -31,7 +31,7 @@ const Dashboard = ({ token, user, setToken, setUser }) => {
 
   const fetchHealthData = useCallback(async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/health-data`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/health-data`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setHealthData(response.data);
